@@ -5,7 +5,9 @@ fn main() {
         .expect("Failed to read input file");
     let ranges: MyRanges = _input.parse().unwrap();
     let result = ranges.solve_1();
-    println!("Result: {}", result);
+    println!("day1: {}", result);
+    let result = ranges.solve_2();
+    println!("day2: {}", result);
 }
 
 struct MyRange(std::ops::RangeInclusive<isize>);
@@ -15,7 +17,16 @@ impl MyRanges {
     fn solve_1(&self) -> isize {
         self.0
             .iter()
-            .flat_map(|range| range.iter_invalid_product_ids())
+            .flat_map(|range| range.iter_invalid_product_ids_part(is_invalid_id_part_1))
+            .collect::<Vec<isize>>()
+            .iter()
+            .sum()
+    }
+
+    fn solve_2(&self) -> isize {
+        self.0
+            .iter()
+            .flat_map(|range| range.iter_invalid_product_ids_part(is_invalid_id_part_2))
             .collect::<Vec<isize>>()
             .iter()
             .sum()
@@ -23,10 +34,10 @@ impl MyRanges {
 }
 
 impl MyRange {
-    fn iter_invalid_product_ids(&self) -> Vec<isize> {
+    fn iter_invalid_product_ids_part(&self, pred: fn(isize) -> bool) -> Vec<isize> {
         let mut invalid_product_ids = Vec::new();
         for id in self.0.clone() {
-            if is_invalid_id(id) {
+            if pred(id) {
                 invalid_product_ids.push(id);
             }
         }
@@ -34,15 +45,30 @@ impl MyRange {
     }
 }
 
-fn is_invalid_id(id: isize) -> bool {
+fn is_invalid_id_part_1(id: isize) -> bool {
     let id_text: String = id.to_string();
-    if id_text.len() % 2 != 0 {
+    if !id_text.len().is_multiple_of(2) {
         return false;
     }
     let index = id_text.len() / 2;
     let part1 = &id_text[..index];
     let part2 = &id_text[index..];
-    return part1 == part2;
+    part1 == part2
+}
+
+fn is_invalid_id_part_2(_id: isize) -> bool {
+    // Placeholder for part 2 logic
+    let id_text: String = _id.to_string();
+    let n = id_text.len();
+    let range = (1..=(n / 2)).filter(|x| n.is_multiple_of(*x)).rev();
+    for r in range {
+        let split = &id_text[..r];
+        let parts = id_text.split(split).collect::<String>();
+        if parts.is_empty() {
+            return true;
+        }
+    }
+    false
 }
 
 impl FromStr for MyRange {
@@ -101,8 +127,29 @@ mod tests {
     }
 
     #[test]
+    fn test_part_2() {
+        let ranges: MyRanges = load_example().parse().unwrap();
+        let actual = ranges.solve_2();
+        let expected = 4174379265;
+        assert_eq!(expected, actual)
+    }
+
+    #[test]
     fn test_is_invalid_id_part1() {
         let example = 100100_isize;
-        assert!(is_invalid_id(example));
+        assert!(is_invalid_id_part_1(example));
+    }
+
+    #[test]
+    fn test_is_invalid_id_part2() {
+        let example = 1111111_isize;
+        assert!(is_invalid_id_part_2(example));
+    }
+
+    #[test]
+    fn test_if_we_can_abuse_split() {
+        let example = "11111";
+        let parts: Vec<&str> = example.split("1").collect();
+        assert_eq!(6, parts.len());
     }
 }
