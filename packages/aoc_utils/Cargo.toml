@@ -1,11 +1,14 @@
 [package]
-name = "build_utils"
+name = "aoc_utils"
 version = "0.1.0"
 edition = "2024"
 
 [dependencies]
 reqwest = { workspace = true, features = ["json", "gzip", "blocking"] }
 anyhow = { workspace = true }
+clap = { workspace = true, features = ["derive"] }
+serde = { workspace = true, features = ["derive"] }
+toml = { workspace = true }
 
 [dev-dependencies]
 tempfile.workspace = true

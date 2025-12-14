@@ -67,7 +67,6 @@ impl Add<isize> for &DialInstruction {
         r
     }
 }
-
 struct DialInstructions(Vec<DialInstruction>);
 
 impl DialInstructions {
@@ -102,7 +101,7 @@ impl TryFrom<&str> for DialInstructions {
 fn main() -> anyhow::Result<()> {
     println!("Dec 1, 2025 - Dial Instructions");
     let result = DialInstructions::try_from(
-        std::fs::read_to_string("packages/dec_1/input.txt")
+        std::fs::read_to_string("packages/aoc_2025_1/input.txt")
             .expect("Couldn't read input.txt")
             .as_str(),
     )?
@@ -121,7 +120,7 @@ mod tests {
     #[test]
     fn it_parses_a_left_instructionp() {
         let line = "L2";
-        let instruction: DialInstruction = line.parse().unwrap();
+        let instruction: DialInstruction = line.parse().expect("Failed to parse instruction 'L2'");
         assert!(matches!(instruction.direction, Direction::Left));
         assert_eq!(instruction.steps, 2);
     }
@@ -129,7 +128,8 @@ mod tests {
     #[test]
     fn it_parses_a_right_instruction() {
         let line = "R100";
-        let instruction: DialInstruction = line.parse().unwrap();
+        let instruction: DialInstruction =
+            line.parse().expect("Failed to parse instruction 'R100'");
         assert!(matches!(instruction.direction, Direction::Right));
         assert_eq!(instruction.steps, 100);
     }
