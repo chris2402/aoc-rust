@@ -4,7 +4,7 @@ use clap::Parser;
 
 #[derive(Parser, Debug)]
 struct Args {
-    #[arg(short = 'y', long = "year")]
+    #[arg(short = 'y', long = "year", default_value_t = 2025)]
     year: isize,
     #[arg(short = 'd', long = "day")]
     day: isize,
