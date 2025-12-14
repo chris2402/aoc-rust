@@ -74,6 +74,9 @@ dependencies = [
 [[package]]
 name = "aoc_2025_2"
 version = "0.1.0"
+dependencies = [
+ "anyhow",
+]
 
 [[package]]
 name = "aoc_utils"
