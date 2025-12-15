@@ -1,5 +1,10 @@
 [workspace]
-members = ["packages/aoc_utils", "packages/aoc_2025_1", "packages/aoc_2025_2"]
+members = [
+    "packages/aoc_utils",
+    "packages/aoc_2025_1",
+    "packages/aoc_2025_2",
+    "packages/aoc_2025_3",
+]
 resolver = "3"
 
 [workspace.dependencies]
