@@ -1,7 +1,11 @@
 use std::path::Path;
 
 fn request_input(day: u8, year: u16) -> anyhow::Result<String> {
-    let session_token = std::env::var("AOC_SESSION_TOKEN")?;
+    let Ok(session_token) = std::env::var("AOC_SESSION_TOKEN") else {
+        return Err(anyhow::anyhow!(
+            "Environment variable 'AOC_SESSION_TOKEN' is not set!"
+        ));
+    };
     let url = format!("https://adventofcode.com/{}/day/{}/input", year, day);
     let client = reqwest::blocking::Client::new();
 
