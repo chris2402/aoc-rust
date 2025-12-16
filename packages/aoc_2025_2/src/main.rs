@@ -6,11 +6,19 @@ use std::{
 fn main() {
     let input = std::fs::read_to_string("packages/aoc_2025_2/input.txt")
         .expect("Failed to read input file");
+
     let ranges: ProductIdRanges = input.as_str().into();
 
-    let result = ranges.solve_1().expect("Failed to solve part 1");
+    let result = ranges
+        .solve(ProductId::is_invalid_1)
+        .expect("Failed to solve part 1");
+
     println!("day1: {}", result);
-    let result = ranges.solve_2().expect("Failed to solve part 2");
+
+    let result = ranges
+        .solve(ProductId::is_invalid_2)
+        .expect("Failed to solve part 2");
+
     println!("day2: {}", result);
 }
 
@@ -74,22 +82,9 @@ impl<'a> From<&'a str> for ProductIdRanges<'a> {
 }
 
 impl ProductIdRanges<'_> {
-    fn solve_1(&self) -> Result<isize, anyhow::Error> {
+    fn solve(&self, predicate: fn(&isize) -> bool) -> Result<isize, anyhow::Error> {
         self.into_iter().try_fold(0_isize, |acc_sum, range_result| {
-            let current_range_sum = range_result?
-                .into_iter()
-                .filter(|id| id.is_invalid_1())
-                .sum::<isize>();
-            Ok(acc_sum + current_range_sum)
-        })
-    }
-
-    fn solve_2(&self) -> Result<isize, anyhow::Error> {
-        self.into_iter().try_fold(0_isize, |acc_sum, range_result| {
-            let current_range_sum = range_result?
-                .into_iter()
-                .filter(|id| id.is_invalid_2())
-                .sum::<isize>();
+            let current_range_sum = range_result?.into_iter().filter(predicate).sum::<isize>();
             Ok(acc_sum + current_range_sum)
         })
     }
@@ -98,8 +93,8 @@ impl ProductIdRanges<'_> {
 struct ProductIdRange(std::ops::RangeInclusive<isize>);
 
 impl IntoIterator for ProductIdRange {
+    type IntoIter = std::ops::RangeInclusive<Self::Item>;
     type Item = isize;
-    type IntoIter = std::ops::RangeInclusive<isize>;
 
     fn into_iter(self) -> Self::IntoIter {
         self.0
@@ -111,14 +106,17 @@ impl FromStr for ProductIdRange {
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         let mut lines = s.split("-");
+
         let start = lines
             .next()
             .ok_or(anyhow::anyhow!("Missing start of range"))?
             .parse::<isize>()?;
+
         let end = lines
             .next()
             .ok_or(anyhow::anyhow!("Missing end of range"))?
             .parse::<isize>()?;
+
         Ok(ProductIdRange(start..=end))
     }
 }
@@ -153,7 +151,7 @@ mod tests {
     fn it_solves_part_1() -> Result<(), anyhow::Error> {
         let examples = load_example();
         let ranges: ProductIdRanges = examples.as_str().into();
-        let actual = ranges.solve_1()?;
+        let actual = ranges.solve(ProductId::is_invalid_1)?;
         let expected = 1227775554;
         assert_eq!(expected, actual);
         Ok(())
@@ -164,7 +162,7 @@ mod tests {
         let examples = load_example();
         let ranges: ProductIdRanges = examples.as_str().into();
 
-        let actual = ranges.solve_2()?;
+        let actual = ranges.solve(ProductId::is_invalid_2)?;
         let expected = 4174379265;
         assert_eq!(expected, actual);
         Ok(())
