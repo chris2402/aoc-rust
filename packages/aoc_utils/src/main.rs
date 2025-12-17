@@ -16,6 +16,7 @@ version = "0.1.0"
 edition = "2024"
 
 [dependencies]
+anyhow.workspace = true
 "#;
 
 const MAIN_RS_TEMPLATE: &str = r#"
@@ -29,6 +30,8 @@ fn main() {
 #[cfg(test)]
 mod tests {
     use super::*;
+    
+    const INPUT: &str = "";
 
     #[test]
     fn it_works() {
