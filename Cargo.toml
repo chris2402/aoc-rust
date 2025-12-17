@@ -6,6 +6,7 @@ members = [
     "packages/aoc_2025_3",
     "packages/aoc_2025_4",
     "packages/aoc_2025_5",
+    "packages/aoc_2025_6",
 ]
 resolver = "3"
 
