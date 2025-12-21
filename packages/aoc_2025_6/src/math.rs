@@ -1,88 +1,58 @@
-mod cephalopod;
-mod human;
+pub mod cephalopod;
+pub mod human;
 
-use std::str::FromStr;
+use std::str::{FromStr, Lines};
 
-use crate::number::CharGrid;
 use anyhow::anyhow;
 
-pub struct MathTasks {
-    char_grid: CharGrid,
+pub struct MathTasks<'a> {
     operators: Vec<Operator>,
+    numbers: Lines<'a>,
 }
 
-impl MathTasks {
+impl<'a> MathTasks<'a> {
     fn len(&self) -> usize {
         self.operators.len()
     }
 
-    fn try_solve_normal(&self) -> Result<usize, anyhow::Error> {
-        let number_array =
-            HumanMathParser::read(self.char_grid.horizontal_iter(), self.operators.clone())?;
+    pub fn try_solve<I>(&self) -> Result<usize, anyhow::Error>
+    where
+        I: MathParser<Term = Result<usize, anyhow::Error>> + From<Lines<'a>>,
+    {
+        let numbers = I::from(self.numbers.clone())
+            .into_iter_assignment()
+            .map(|it| it.collect::<Result<Vec<usize>, anyhow::Error>>());
 
-        // TODO
-        Ok(number_array.iter().map(|task| task.solve()).sum())
-    }
-}
-
-/*
- * Right before giving up I had an idea:
- *  Parsers that generate vectors of iterators that over the CharGrid
- *   - HumanParser parses by folding over each number into its own vector of usize;
- *      each vector is one math equation, zipped with the operator
- *   - CephalopodParser pushes all line chars into their own String, even when it is whitespace;
- *      split iterator on empty strings, each split is one math equation that can be zipped with the operator
- */
-struct HumanMathParser;
-
-impl HumanMathParser {
-    fn read<T: Iterator<Item = String>>(
-        lines: T,
-        operators: Vec<Operator>,
-    ) -> Result<Vec<MathTask>, anyhow::Error> {
-        let math_numbers = lines
-            .map(|l| {
-                l.split_whitespace()
-                    .map(usize::from_str)
-                    .collect::<Result<Vec<usize>, _>>()
-            })
-            .collect::<Result<Vec<Vec<usize>>, _>>()?
-            .iter()
-            .try_fold(vec![] as Vec<Vec<usize>>, |mut acc, numbers| {
-                if acc.is_empty() {
-                    acc = vec![vec![]; numbers.len()];
-                } else if acc.len() != numbers.len() {
-                    return Err(anyhow!("Inconsistent number of columns in number grid."));
-                }
-
-                Ok(acc
-                    .into_iter()
-                    .zip(numbers)
-                    .map(|(mut col_vec, &num)| {
-                        col_vec.push(num);
-                        col_vec
+        let tasks =
+            numbers
+                .into_iter()
+                .zip(self.operators.iter().cloned())
+                .map(|(numbers, operator)| {
+                    Ok(MathTask {
+                        numbers: numbers?,
+                        operator,
                     })
-                    .collect::<Vec<Vec<usize>>>())
-            })?;
+                });
 
-        if operators.len() != math_numbers.len() {
-            return Err(anyhow!(
-                "Number of operators does not match number of tasks."
-            ));
-        }
-
-        Ok(math_numbers
+        Ok(tasks
+            .map(|task: Result<MathTask, anyhow::Error>| Ok(task?.into_solution()))
+            .collect::<Result<Vec<_>, anyhow::Error>>()?
             .into_iter()
-            .zip(operators)
-            .map(|(numbers, operator)| MathTask { numbers, operator })
-            .collect())
+            .sum())
     }
 }
 
-impl FromStr for MathTasks {
-    type Err = anyhow::Error;
+pub trait MathParser {
+    type Term;
+    type Equations: Iterator<Item = Self::Term>;
 
-    fn from_str(s: &str) -> Result<Self, Self::Err> {
+    fn into_iter_assignment(self) -> impl Iterator<Item = Self::Equations>;
+}
+
+impl<'a> TryFrom<&'a str> for MathTasks<'a> {
+    type Error = anyhow::Error;
+
+    fn try_from(s: &'a str) -> Result<Self, Self::Error> {
         let mut lines_iter = s.lines();
 
         let operator_line = lines_iter
@@ -92,24 +62,20 @@ impl FromStr for MathTasks {
         let operators = operator_line
             .split_whitespace()
             .map(Operator::from_str)
-            .collect::<Result<Vec<Operator>, _>>()?;
+            .collect::<Result<Vec<_>, _>>()?;
 
-        let number_matrix = lines_iter.collect::<CharGrid>();
+        let numbers = lines_iter;
 
-        Ok(MathTasks {
-            char_grid: number_matrix,
-            operators,
-        })
+        Ok(MathTasks { operators, numbers })
     }
 }
-
 struct MathTask {
     numbers: Vec<usize>,
     operator: Operator,
 }
 
 impl MathTask {
-    fn solve(&self) -> usize {
+    fn into_solution(self) -> usize {
         match self.operator {
             Operator::Add => self.numbers.iter().sum(),
             Operator::Multiply => self.numbers.iter().product(),
@@ -138,6 +104,8 @@ impl FromStr for Operator {
 #[cfg(test)]
 mod tests {
 
+    use crate::math::{cephalopod::CephalopodNumberParser, human::HumanNumberParser};
+
     use super::*;
     const INPUT: &str = "123 328  51 64 
  45 64  387 23 
@@ -146,14 +114,21 @@ mod tests {
 ";
     #[test]
     fn it_parses() {
-        let math_tasks = INPUT.parse::<MathTasks>().expect("Failed to parse input");
+        let math_tasks: MathTasks = INPUT.try_into().expect("Failed to parse input");
         assert_eq!(math_tasks.len(), 4);
     }
 
     #[test]
     fn it_solves_normal() -> Result<(), anyhow::Error> {
-        let math_tasks = INPUT.parse::<MathTasks>()?;
-        assert_eq!(math_tasks.try_solve_normal()?, 4277556);
+        let math_tasks: MathTasks = INPUT.try_into().expect("Failed to parse input");
+        assert_eq!(math_tasks.try_solve::<HumanNumberParser>()?, 4277556);
+        Ok(())
+    }
+
+    #[test]
+    fn it_solves_cephalopod() -> Result<(), anyhow::Error> {
+        let math_tasks: MathTasks = INPUT.try_into().expect("Failed to parse input");
+        assert_eq!(math_tasks.try_solve::<CephalopodNumberParser>()?, 3263827);
         Ok(())
     }
 }
