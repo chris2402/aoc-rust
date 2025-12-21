@@ -106,6 +106,13 @@ dependencies = [
 ]
 
 [[package]]
+name = "aoc_2025_7"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+]
+
+[[package]]
 name = "aoc_utils"
 version = "0.1.0"
 dependencies = [
