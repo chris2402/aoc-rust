@@ -1,19 +1,41 @@
+use crate::graph::Manifold;
+
+mod graph;
+
 fn main() -> Result<(), anyhow::Error> {
-    let input = std::fs::read_to_string("packages/aoc_2025_7/input.txt")
+    let _input = std::fs::read_to_string("packages/aoc_2025_7/input.txt")
         .expect("Failed to read input file");
 
-    let _parsed = parse(&input)?;
+    let manifold: Manifold = _input.parse()?;
+    println!("Result 1 : {}", manifold.split_count());
+    println!("Result 2 : {}", manifold.count_worlds());
     Ok(())
-}
-
-fn parse(s: &str) -> Result<Vec<&str>, anyhow::Error> {
-    Ok(s.lines().rev().collect())
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
-
+    // .......0.......
+    // ...............
+    // .......1.......
+    // ...............
+    // ......2.3......
+    // ...............
+    // .....4.5.6.....
+    // ...............
+    // ....7.8...9....
+    // ...............
+    // ...1.1...1.1...
+    // ...0.1...2.3...
+    // ...............
+    // ..1...1.....1..
+    // ..4...5.....6..
+    // ...............
+    // .1.1.1.2.2...2.
+    // .7.8.9.0.1...2.
+    // ...............
+    // 2.2.2.2.2.2.2.3
+    // 3.4.5.6.7.8.9.0
     const INPUT: &str = ".......S.......
 ...............
 .......^.......
@@ -33,8 +55,15 @@ mod tests {
 ";
 
     #[test]
-    fn it_parses() -> Result<(), anyhow::Error> {
-        parse(INPUT)?;
+    fn it_solves_1() -> Result<(), anyhow::Error> {
+        let manifold: graph::Manifold = INPUT.parse()?;
+        assert_eq!(manifold.split_count(), 21);
+        Ok(())
+    }
+    #[test]
+    fn it_solves_2() -> Result<(), anyhow::Error> {
+        let manifold: graph::Manifold = INPUT.parse()?;
+        assert_eq!(manifold.count_worlds(), 40);
         Ok(())
     }
 }
